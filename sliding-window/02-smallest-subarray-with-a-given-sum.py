@@ -26,7 +26,10 @@ def smallest_subarray_with_given_sum(arr, s):
     Algo:
         use sliding window to
     [2,1,5,2,3,2], S=7
-     ^ ^
+   s         ^
+   e             ^
+    sum_window = 5
+    length_subarray = 2
     Complexity:
         Time: O(n)
         Space: O(1)
