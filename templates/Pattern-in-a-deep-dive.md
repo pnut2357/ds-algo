@@ -89,7 +89,7 @@ In contrast to the breadth-oriented approach of BFS, DFS explores as far as poss
 #### 1.2.1 Recursive vs iterative Implementation
 The choice between a recursive and an iterative implementation of DFS is one of the most fundamental trade-offs in algorithm design, involving considerations of code clarity, performance, and memory constraints. 
 
-- **Implementation and Readability**: Recursive DFS is concise. The logic of exploring a path, making a recursive call for a neighbor, and then automatically returning to the previous state via backtracking is handled implicitly by the language's call stack. This often results in code that is shorter and more closely mirrors the conceptual definition of the algorithm. 
+**Implementation and Readability**: Recursive DFS is concise. The logic of exploring a path, making a recursive call for a neighbor, and then automatically returning to the previous state via backtracking is handled implicitly by the language's call stack. This often results in code that is shorter and more closely mirrors the conceptual definition of the algorithm. 
 ```python
 def dfs_recursive(graph, node, visited):
     if node in visited: return
@@ -113,9 +113,11 @@ def dfs_iterative(graph, start_node):
         for neighbor in reversed(graph.get(node)):
             stack.append(neighbor)
 ```
-- **Performance and Memory**: The primary motication for choosing an iterative implementation is to circumvent the limitations of the recursion call stack. In Python, the recursion depth is limited typically to ~ 1000 frames) to prevent stack overflow errors. For very deep or unbalanced graphs (e.g., a linked-list-like structure), a recursive DFS will quickly exceed this limit, causing the program to crash. The iterative approach, using a heap-allocated stack, is only limited by the total available system memory and is therefore more robust for large-scale or arbitarily structured inputs. Furthermore, recursive function calls carry a certain amount of overhead, which can make the iterative version slightly faster in practice, O(V+E).
-- **neighbor Traversal Order**: A subtle by critical difference exists in how neighbors are processed. A standard recursive implementation, which iterates through neighbors in their given order (e.g., `for neighbor in graph[node]`), will explore the first neighbor's branch completely before moving to the second. A naive iterative implementation that pushes neighbors onto a stack in their given order will result in a reversed traversal order. Because the stack is LIFO, the last neighbor pushed will be the first one popped and explored. To make the iterative traversal order match the recursive one, neighbors must be pushed onto the stack in reverse order. 
-- **The "State on the Stack" Paradigm**: The elegance of recursion becomes most apparent in problems requiring post-order processing (i.e., processing a node after all its descendants have been visited). In a recursive call, the state of the parent node's execution - including which neighbor to visit next - is automatically saved on the call stack. When a recursive call like `dfs(child)` returns, the parent function resumes exavtly where it left off. Replicating this behavior iteratively is non-trivial. An iterative stack cannot simply store nodes; it must store the entire state of the traversal, often as a tuple like `(node, iterator_for_neighbors)` or by using a second stack to track post-oder visits. This added complexity makes recursion a significantly cleaner and more intuitive choice for problems where the return value from a subtree's exploration or post-processing is essential, such as in many dynamic programming on trees or path-sum problems.
+**Performance and Memory**: The primary motication for choosing an iterative implementation is to circumvent the limitations of the recursion call stack. In Python, the recursion depth is limited typically to ~ 1000 frames) to prevent stack overflow errors. For very deep or unbalanced graphs (e.g., a linked-list-like structure), a recursive DFS will quickly exceed this limit, causing the program to crash. The iterative approach, using a heap-allocated stack, is only limited by the total available system memory and is therefore more robust for large-scale or arbitarily structured inputs. Furthermore, recursive function calls carry a certain amount of overhead, which can make the iterative version slightly faster in practice, O(V+E).
+
+**neighbor Traversal Order**: A subtle by critical difference exists in how neighbors are processed. A standard recursive implementation, which iterates through neighbors in their given order (e.g., `for neighbor in graph[node]`), will explore the first neighbor's branch completely before moving to the second. A naive iterative implementation that pushes neighbors onto a stack in their given order will result in a reversed traversal order. Because the stack is LIFO, the last neighbor pushed will be the first one popped and explored. To make the iterative traversal order match the recursive one, neighbors must be pushed onto the stack in reverse order. 
+
+**The "State on the Stack" Paradigm**: The elegance of recursion becomes most apparent in problems requiring post-order processing (i.e., processing a node after all its descendants have been visited). In a recursive call, the state of the parent node's execution - including which neighbor to visit next - is automatically saved on the call stack. When a recursive call like `dfs(child)` returns, the parent function resumes exavtly where it left off. Replicating this behavior iteratively is non-trivial. An iterative stack cannot simply store nodes; it must store the entire state of the traversal, often as a tuple like `(node, iterator_for_neighbors)` or by using a second stack to track post-oder visits. This added complexity makes recursion a significantly cleaner and more intuitive choice for problems where the return value from a subtree's exploration or post-processing is essential, such as in many dynamic programming on trees or path-sum problems.
 
 #### 1.2.2 Tree-specific DFS
 For binary trees, DFS manifests in three canonical traversal orders, each defined by the position of the "visit" (or processing) step relative to the recursive calls for the left and right subtrees. 
@@ -174,7 +176,278 @@ This three-state system is crucial for directed graphs. In an undirected graph, 
 | Ideal Use Case            | Problems with natural recursive structure (tree traversals, backtracking, post-order processing). | Very large/deep graphs, environments with strict recursion limits, or when fine-grained state control is needed. | Recursive DFS fits problems with recursive nature; iterative DFS suits performance and depth-intensive scenarios. |
 
 ## Section 2: Pointer-Based Techniques on Linear Data Structures
-A significant class of problems involving linear data structures like arrays, strings, and linked lists can be optimized by employing pointer-based techniques. These patterns typically invole two or more pointers that traverse the data structure in a coordinated fashion, allowing for the examination of elements or sub-structures in a single pass. This approach frequently reduces time complexity from quadratic, O(n^2), which arises from nested loops, to a more efficient linear time, O(n).
+A significant class of problems involving linear data structures like arrays, strings, and linked lists can be optimized by employing pointer-based techniques. These patterns typically involve two or more pointers that traverse the data structure in a coordinated fashion, allowing for the examination of elements or sub-structures in a single pass. This approach frequently reduces time complexity from quadratic, O(n^2), which arises from nested loops, to a more efficient linear time, O(n).
 
 ### 2.1 The two poionters Paradigm: A Spectrum of Strategies. 
-The 
+The term "Two Pointers" is not monolithic pattern but rather an umbrella term for a family of distinct strategies. The movement of the pointers and the preconditions of the data (e.g., sored or unsorted) determine the specific sub-pattern. Recognizing the correct sub-pattern is crucial for effective problem solving. The primary variations include pointers starting at opposite ends, pointers moving in the same direction (often called a sliding window), and pointers moving at different speeds. 
+
+#### 2.1.1 Opposite-End Pointers: The "Squeeze"
+This technique is most potent when applied to **sorted arrays**. it initializes two pointers, `left` at the beginning of the array (`index 0`) and `right` at the end (`index len(arr)-1`), and moves them toward each other, effectively "squeezing" the search space.
+
+**Application: [Two Sum II - Input Array is Sorted](https://leetcode.com/problems/two-sum-ii-input-array-is-sorted/)**
+
+This is a classic applicatino of the opposite-end pointers technique. Given a sorted array and a target sum, the goal is to find a pair of elements that add up to the target. The sorted nature of the array provides a critical property:
+  - If the current sum `arr[left]+arr[right]` is greater than the `target`, the sum must be decreased. Since the array is sorted, the only way to achieve this is by moving the `right` pointer to the left (`right-=1`), selecting a smaller number. 
+  - If the current sum is less than the `target`, the sum must be increased. This can only be achieved by moving the `left` pointer to the right (`left+=1`), selecting a larger number.
+This process systematically eliminates invalid pairs. At each step, either the `left` or `right` pointer moves, ensuring that the entire array is scanned in a single pass, achieving O(n) time complexity with O(1) space, a significant improvement over the naive O(n^2) approach.
+```python
+def two_sum_approach(arr, target):
+    left, right = 0, len(arr)-1
+    while left < right:
+        current_sum = arr[left]+arr[right]
+        if current_sum == target:
+            return [left+1, right+1]
+        elif current_sum < target:
+            left += 1
+        elif current_sum > target:
+            right -= 1
+    return 
+```
+**Advanced Application: [Trapping Rain Water](https://leetcode.com/problems/trapping-rain-water/)**
+
+A more complex and non-obvious application of this pattern is the "Trapping Rain Water" problem. The goal is to calculate the volume of water that can be trapped between vertical bars of varying heights. AN optimal O(n) time and O(1) space solution uses opposite-end pointers. 
+
+The core logic relies on maintaining the maximum height seen so far from the left (`left_max`) and from the right (`right_max`). The pointers `left` and `right` move inward. The key realization is that the amount of water trapped above any bar is determined by `min(max_height_to_left, max_height_to_right) - current_height`. The two-pointer approach cleverly calculates this without pre-computing two arrays of max heights. 
+
+The decision of which pointer to move is based on a comparison of `left_max` and `right_max`.
+
+- If `left_max < right_max`, we process the `left` pointer. We can safely calculate the water trapped at the `left` index because we know `left_max` is the bottleneck from the left. Crucially, we are also guaranteed that there is a wall to the right that is at least as high as `right_max`, and since `right_max > left_max`, this wall is also higher than `left_max`. Therefore, `left_max` is the definitive water level for the current `left` position. 
+- Conversely, if `right_max <= left_max`, we process the `right` pointer, as `right_max` is the definitive water level for that position. 
+
+This logic allows the algorithm to determine the trapped water at each position in a single pass. 
+```python
+def trap(height):
+    if not height: return 0
+    n = len(height)
+    total_water, left_max, right_max = 0, [0]*n, [0]*n
+    for i in range(1, n): left_max[i] = max(left_max[i-1], height[i])
+    right_max[-1] = height[-1]
+    for i in range(n-2, -1, -1): right_max[i] = max(right_max[i+1], height[i])
+    for i in range(n):
+       water_level = min(left_max[i], right_max[i])
+       trapped_water = water_level - height[i]
+       total_water += trapped_water
+    return total_water
+
+def trap(height):
+    left, right = 0, len(height)-1
+    left_max, right_max= 0, 0
+    total_water = 0
+    while left < right:
+        if height[left] < height[right]:
+            if height[left] >= left_max:
+                left_max = height[left]
+            else:
+                total_water += left_max - height[left]
+            left+=1
+        else:
+            if height[right] >= right_max:
+                right_max = height[right]
+            else:
+                total_water += right_max - height[right]
+            right-=1
+    return total_water
+```
+#### 2.1.2 Fast & Slow Pointers: The "Tortoise and Hare"
+This technique involves two pointers that traverse a data structure, typically a linked list, in the same direction but at different speeds. Most commonly, a `slow` pointer advances one node at a time, while a `fast` pointer advances two nodes at a time. This relative speed difference is the key to solving several problems related to cycles and list structure. 
+
+**Application: [Cycle Detection in a Linked List](https://leetcode.com/problems/linked-list-cycle/)**
+
+This is the canonical use case, also known as Floyd's Cycle Detection Algorithm. 
+- If a cycle exists in the linked list, the `fast` pointer, moving twice as quickly, will eventually enter the cycle and "lap" the `slow` pointer, inevitably meeting it at some node within the cycle. 
+- If no cycle exists, the `fast` pointer (or `fast.next`) will eventually reach `null`, terminating the traversal. 
+```python
+# class ListNode:
+#     def __init__(self, x):
+#         self.val = x
+#         self.next = None
+def hasCycle(head: Optional[ListNode]) -> bool:
+    slow = head
+    fast = head
+    while fast and fast.next:
+        slow = slow.next
+        fast = fast.next.next
+        if slow == fast:
+            return True
+    return False
+```
+
+**Application: [Finding the Start of a Cycle](https://leetcode.com/problems/linked-list-cycle-ii/)**
+
+Detecting the cycle is only the first part. A two-phase extension of the algorithm can pinpoint the exact node where the cycle begins. 
+- Phase 1: Use the fast and slow pointers as described above until they meet at an intersection point within the cycle.
+- Phase 2: Once they meet, reset one pointer (e.g. the `slow` pointer) back to the `head` of the list. Keep the other pointer (`fast`) at the meeting point. Now, advance both pointers one step at a time. The node where they meet again is precisely the starting node of the cycle. 
+```python
+def detectCycle(self, head: Optional[ListNode]) -> Optional[ListNode]:
+    slow = fast = head
+    is_cyclic = False
+    while fast and fast.next:
+        slow = slow.next
+        fast = fast.next.next
+        if slow == fast:
+            slow = head
+            is_cyclic = True
+            break
+    if not is_cyclic:
+        return 
+    while slow != fast:
+        slow = slow.next
+        fast = fast.next
+    return slow
+```
+**Application: [Finding the Middle of a Linked List](https://leetcode.com/problems/middle-of-the-linked-list/description/)**
+
+The different speeds of the pointers can also be exploited to find the middle element of a linked list in a single pass. WHen the `fast` pointer reaches the end of the list (i.e., `fast` or `fast.next` is `null`), the `slow` pointer will have traversed exactly half the distance and will be positioned at the middle node. 
+
+### 2.2 The Sliding Window: Dynamic Subarray Analysis
+The sliding window is a specialized and highly effective form of the two-pointers technique, applied to arrays and strings. It defines a contiguous "window" over the data, delimited by a `left` and `right` pointer. The window explands by advancing the `right` pointer and contracts by advancing the `left` pointer. This dynamic adjustment allows for the efficient analysis of all contiguous subarrays or substrings, converting many crute-force O(n^2) problems into linear O(n) solutions. 
+
+#### 2.2.1 Fixed-Size vs. Dynamic-Size Windows
+- Fixed-size Window: In this simpler variant, the window maintains a constant size, `k`. Both the `left` and `right` pointers advance in lockstep, one position at a time, after the initial window of size `k` is formed. This is suitable for problem like "Find the maximum sum of any contiguous subarray of size `k`." The logic involves adding the new element at `right` and removing the old element at `left-1` to maintain the window's sum or state. 
+- Dynamic-size Window: This is a more versatile and common pattern where the window size is not fixed. The `right` pointer concsistently moves forward to expand the window. The `left` pointer only moves forward to shrink the window when a specific condition is violated. The goal is typically to find the longest or shortest window that satisfies some property. 
+
+#### 2.2.2 The canonical Dynamic Window Template
+The dynamic sliding window pattern follows a robust and reusable template. It involves an outer loop to expand the window and a nested inner loop to contract it when necessary. A state-keeping data structure, often a hash map, is used to track the properties of the current window. 
+```python
+def sliding_window(arr, condition_params):
+    left, result, window_state = 0, 0, {}
+    for right in range(len(arr)):
+        # 1. Expand window by including arr[right]
+        # update window_state with arr[right]
+        # 2. SHRINK window from the left while it is invalid
+        while not is_window_valid(window_state, condition_params):
+            # Update window_state by removing arr[left]
+            left += 1
+        # 3. UPDATE result with the current valid window's properties.
+        # e.g., result = max(result, right-left+1)
+    return result
+```
+
+#### 2.2.3 Nuances in Optimization: Minimums vs. Maximums
+A subtle but powerful detail in applying the dynamic window template is the placement of the result update logic. This placement depends on whether the problem seeks a minimum-length or maximum-length window. 
+- Finding a Minimum-Length Window: For problems like "Minimum Window Substring", the goal is to find the smallest possible window that is valid. In this case, the inner loop's condition is typically `while window_is_valid`. The logic proceeds as follows: expand the window until it becomes valid. As soon as it is valid, it is a candidate for the minimum, so we update the result immediately. Then, we enter the `while` loop and begine shrinking the window from the left, checking at each step if it remains valid and potentially finding an even smaller valid window. The result must be updated inside this `while` loop, before any shrinking step that might invalidate the window. 
+- Finding a Maximum-Length Window: For problem like "Longest Substring with K Distinct Characters", the goal is to find the largest possible window that is valid. Here, the inner loop's condition is typically `while window_is_invalid`. The logic is: expand the window with the `right` pointer. If this expansion makes the window invalid, the `while` loop is triggered to shrink the window from the `left` until it becomes valid again. A valid window, which is a candidate for the maximum length, is only guaranteed after the inner shrinking loop has completed (or if it was never entered). Therefore, the result should be updated outside and after the inner `while` loop, at the end of the main `for` loop's iteration. 
+
+This distinction in where the result is updated is not arbitrary; it is a direct consequence of the problem's objective (min vs. max) and the corresponding logic for when a window is considered a viable candidate for the answer. 
+
+## Section 3: Hashing - The Power of Constant-Time Lookups
+Hashing provides a powerful mechanism for optimizing algorithms by enabling data access, insertion, and deletion in average-case constant time, or O(1). Hash-based data structures, such as hash maps and hash sets, use a hash function to compute an index into an array of buckets or slots, from which the desired value can be found. This direct-access capability allows for the circumvention of linear of logarithmic search times, making them indispensable tools for a wide range of problems involving frequency counting, duplicate detection, and grouping. 
+
+### 3.1. Hash Maps (Dictionaries): Key-Value Mastery
+A hash map (or dictionary in Python) is an associative array that maps keys to values, allowing for highly efficient retrieval of a value when its key is known. The core of solving a problem with a hash map lies in correctly identifying what data should serve as the key and what associated info should be sored as the value. 
+
+#### 3.1.1 Foundational Use Cases: Counting and Complements
+**Frequency Counting**: The most straightforward application of a hash map is to count the frequency of items in a collection. The items themselves serve as the keys, and their counts are stored as the values. As the collection is traversed, each item's count in the map is incremented. This pattern is a fundamental building block for many more complex problems. 
+```python
+from collections import defaultdict
+def count_frequencies(data):
+    freq_map = defaultdict(int)
+    for item in data:
+        freq_map[item] += 1
+    return freq_map
+```
+**The Complement Strategy (Two Sum)**: The "Two Sum" problem is a canonical example of hash map utility. Given an array of integers and a target value, the task is to find two number that sum to the target. A naive approach using nested loops would be O(n^2). A hash map reduces this to O(n).
+
+The strategy is to iterate through the array once. For each element `num` at index `i`, we calculate its required `complement` (`target-num`). We then check the hash map to see if this `complement` has been encountered before. 
+
+- If the `complement` exists as a key in the map, we have found our pair. The value associated with the `complement` key is its index, and the current index is `i`. 
+- If the `complement` is not in the map, we add the current number `num` and its index `i` to the map (`lookup[num]=i`) to make it available for future complement checks. 
+
+This one-pass approach effectively trades O(n) space (for the hash map) to reduce the time complexity from O(n^2) to O(n) because the lookup for the complement becomes an average-case O(1) operation instead of an O(n) linear scan. 
+
+#### 3.1.2 Advanced Grouping Logic: The Art of the Canonical Key
+For more complex grouping problems, the challenge lies in devising a canonical key - a unique representation that is identical for all items belonging to the same group. 
+
+**Application: Group Anagrams**
+The "Group Anagrams" problem asks to group a list of strings where each group contains words that are anagrams of each other. The solution hinges on finding a way to map "eat", "tea", and "ate" to the same key. Two primary strategies exist for generating this canonical key:
+1. Sorted String as key: The simpler approach is to sort each string alphabetically. The resulting sorted string serves as the canonical key. Since all anagrams are composed of the same letters, they will produce the exact same sorted string. For example, `sorted("eat")`, `sorted("tea")`, and `sorted("ate")` all yield `"aet"`. This key is then used to group the original, unsorted strings in a hash map. 
+2. Character Frequency as Key: A more performant approach, especially for long strings, is to use the character frequency count as the key. For each string, a frequency array (e.g., a 26-element array for lowercase English letters) is created. This array, which represents the character signature of the string, is then converted into a hashable type (like a tuple in Python) to be used as the key. For example, "eat" would map to a tuple like `(1, 0, 0, 0, 1, 0,..., 1,...)`.
+
+The choice between these two strategies represents a classic performance trade-off. For a list of N strings with an average length of K, the sorted-string approach has a time complexity dominated by sorting each string, resulting in a time complexity of O(NKlogK). The character-frequency approach involves a single pass over each string, resulting in a time complexity of O(NK). Asymptotically, the frequency-count method is superior. However, for short strings, the simplicity of the sorting approach and the high optimization of native sorting functions might lead to better practical performance. THis decision between asymptotic superiority and implementation simplicity is a common consideration in software engineering. 
+
+### 3.2 Hash Sets: Efficient Membership and Uniqueness
+A hash set is a specialized version of a hash map where only the keys are stored and the associated values are irrelevant. Its primary purpose is to provide highly efficient membership testing - answering the question "Is this element present in the collection?" in O(1) average time. 
+
+#### 3.2.1 Primary Application: Duplicate Detection
+The most common and powerful application of a hash set is detecting duplicates within a collection. The algorithm is strightforward: 
+1. Initialize an empty hash set. 
+2. Iterate through the input list or array.
+3. For each element, check if it is already present in the hash set. 
+   - If it is, a duplicate has been found. 
+   - If it is not, add the element to the hash set. 
+
+This approach finds the first duplicate in O(n) time and O(n) space in the worst case (if all elements are unique). This is significantly more efficient than a naive O(n^2) comparison of all pairs or an O(nlogn) approach that involes sorting the array first to being duplicates together. 
+
+```python
+def contains_duplicate(nums):
+    seen = set()
+    for num in nums:
+        if num in set:
+            return True
+        seen.add(num)
+    return False
+```
+#### 3.2.2 Decision Point: Hash Set vs. Hash Map
+The decision to use a hash set versus a hash map hindes entirely on the information required by the problem. The question to ask is: "Do I need to associate any extra data with the elements I am tracking?"
+- Use a **Hash Set** when the only question is one of presence or absence: "Have I seen this element before?" This is ideal for problems like "Contains Duplicate", cycle detection in linked lists (storing visited nodes), or as the `visited` tracker in graph traversals. 
+- Use a **Hash Map** when the question is more complex: "Have I seenthis element before, and if so, what info did I store about it?" The value payload of the map is the deciding factor. This is necessary for problems like "Two Sum" (where the value is the index of the complement), "Frequency Counter" (where the value is the count), or "Group Anagrams" (where the value is the list of strings belonging to that anagram group).
+
+## Section 4: Priority Queues (Heaps) - Mastering Selection and Ordering
+A priority queue, most commonly implemented using a heap, is a specialized data structure that excels at problems requiring repeated selection of the minimum or maximum element from a dynamic collection. A heap is a tree-based structure that satisfies the heap property: in a min-heap, every parent ndoe is less than or equal to its children, ensuring the smallest element is always at the root; in a max-heap, every parent is greater than or equal to its children, ensuring the largest is at the root. Operations like insertion and extraction of the min/max element are preformed in logarithmic time, O(log n)
+
+### 4.1 The "Top K Elements" Pattern: A counter-Intuitive Deep Dive
+
+One of the most powerful and frequently encountered applications of heaps is the "Top K Elements" pattern. This pattern provides an efficient way to find the K largest or K smallest elements from a large, unsorted collection of N items without incurring the O(n log n) cost of sorting the entire collection. The optimla implementation of this pattern is often counter-intuitive. 
+
+#### 4.1.1 Finding K Largest Elements with a Min-Heap
+
+The most efficient method for finding the K largest elements in a collection is to use a min-heap of size K. 
+The logic is:
+1. Initialize an empty min-heap.
+2. Iterate through the N elements of the input array. For each number `num`:
+3. Push `num` onto the min-heap.
+4. If the size of the heap grows larger than K, immediately pop the smallest element. In Python's `heapq` library, this can be done by checking `if len(heap) > k: heapq.heappop(heap)`.
+5. After iterating through all N numbers, the min-heap will contain exactly the K largest elements from the original array. The root of this heap (`heap`) will be the K-th largest element. 
+
+This approach seems paradoxical. The efficiency comes from the role of the min-heap as a "gatekeeper" for the set of the K largest elements seen so far. The root of the min-heap is always the smallest of these K elements - it is the "weakest link" in our current top-K set. When a new number `num` is considered, it only needs to be compared against this weakest link. 
+
+- If `num` is less than or equal to the heap's root, it cannot possibly be one of the K largest elements, so it is discarded. 
+- If `num` is greater than the heap's root, it deserves a place in the top-K set. It is pushed onto the heap, and the former weakest link (the old root) is displaced. 
+
+This process ensures that the heap never grows beyond size K (after the initial phase) and each of the N elements is processed with an O(log K) heap operation, leading to a total time complexity of O(N log K). This is substantially better than the O(N log N) of a full sort, especially when K is much smaller than N. 
+
+```python
+import heapq
+def find_k_largest(nums, k):
+    min_heap = []
+    for num in nums:
+        heapq.heappush(min_heap, num)
+        if len(min_heap) > k:
+            heapq.heappop(min_heap)
+    return min_heap
+```
+
+#### 4.1.2 Finding K Smallest Elements with a Max-Heap
+The inverse logic applies to finding the K smallest elements. The optimal tool for this task is a max-heap of size K.
+
+In this configuration, the root of the max-heap represents the largest of the K smallest elements found so far. When a new number `num` arrives, it is compared to this root.
+
+- If `num` is greater than or equal to the root, it is too large to be in the set of K smallest elements and is discarded. 
+- If `num` is smaller than the root, it earns a spot in the set, and the root (the current largest of the smalls) is easily achieved by storing the negatives fo the numbers in the heap. A min-heap of negative numbers behaves identically to a max-heap of their positive counterparts.
+
+Since Python's `heapq` library is exclusively a min-heap implementation, a max-heap must be simulated. This is easily achieved by storing the negatives of the numbers in the heap. A min-heap of negative numbers behaves identically to a max-heap of their positive counterparts. When extracting the ginal results, the numbers must be negated again to restore their original values.
+
+```python
+import heapq
+
+
+def find_k_smallest(nums, k):
+    max_heap =
+    for num in nums:
+        # Push the negative to simulate a max-heap
+        heapq.heappush(max_heap, -num)
+        if len(max_heap) > k:
+            heapq.heappop(max_heap)
+    # Negate the results back to their original values. 
+    return [-x for x in max_heap]
+```
