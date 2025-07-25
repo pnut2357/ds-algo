@@ -439,10 +439,8 @@ Since Python's `heapq` library is exclusively a min-heap implementation, a max-h
 
 ```python
 import heapq
-
-
 def find_k_smallest(nums, k):
-    max_heap =
+    max_heap = []
     for num in nums:
         # Push the negative to simulate a max-heap
         heapq.heappush(max_heap, -num)
@@ -451,3 +449,118 @@ def find_k_smallest(nums, k):
     # Negate the results back to their original values. 
     return [-x for x in max_heap]
 ```
+
+### 4.2 Advanced Application - Median of a Data Stream
+A classic and sophisticated application of heaps is finding the median of a dynamically growing stream of numbers. A naive approach of sorting the list after each new number arrives would be prohibitively slow. The optimal solution uses a clever two-heap architecture. 
+
+#### 4.2.1 The Two-Heap Architecture
+The problem is solved by maintaining two heaps:
+1. A max-heap (let's call it `small_half`) to store the smaller half of the numbers seen so far. 
+2. A min-heap (let's call it `large_half`) to store the larger half of the numbers seen so far. 
+
+This architecture partitions the entire dataset around the median. The root of `small_half` is the largest element in the smaller half, and the root of `large_half` is the smallest element in the larger half. These two roots are always the one or two central elements of the full sorted list. This allows the median to be calculated in O(1) time at any point by simply looking at the roots of the two heaps. 
+
+#### 4.2.2 The Rebalancing Algorithm
+To make this architecture work, two invariants must be maintained after every number is added:
+1. Partition Invariant: Every number in `small_half` must be less than or equal to every number in `large_half`.
+2. Size Invariant: The sizes of the two heaps must differ by at most one. 
+
+A robust rebalancing algorithm ensures these invariants hold:
+1. When a new number `num` arrives, add it to the `small_half` (max-heap). To maintain the partition invariant, immediately pop the largest element from `small_half` and push it into `large_half` (min-heap). This step ensures `num` ends up in the correct heap relative to the existing elements. 
+2. Now, check the size invariant. If one heap has become too large (e.g., `len(large_half) > len(small_half)`), move the root from the larger heap to the smaller one to restore balance. 
+
+After these steps, the median is calculated based on the heap sizes:
+- If `len(small_half) == len(large_hald)`, the total number of elements is even. The median is the average of the two roots: `(small_half.root + large_hald.root)/2`.
+- If the sizes differ, the total is odd. The median is the root of the larger heap.
+
+This combination of partitioning and rebalancing allows for the addition of a new number in O(log n) time while keeping the median calculation at O(1).
+
+| Goal                   | Required Data Structure | Rationale                                                                                                                                                   |
+|------------------------|--------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Find K Largest Elements | Min-Heap of size K       | The heap's root is the "weakest" of the K largest elements found so far. A new element only needs to be compared against this weakest link. This efficiently maintains the K largest items with O(NlogK) complexity. |
+| Find K Smallest Elements | Max-Heap of size K       | The heap's root is the "strongest" of the K smallest elements found so far. A new element only needs to be compared against this strongest link. This efficiently maintains the K smallest items with O(NlogK) complexity. |
+
+## Section 5: Binary Search - Beyond a Sorted Array
+
+Binary Search is a quintessential divide-and-conquer algorithm. Its fundamental application is to efficiently find a target element within a sorted array. By repeatedly halving the search interval, it achieves a logarithmic time complexity of O(log n), a dramatic improvement over linear search. However, the power of binary search extends far beyond this simple use case. Nuances in its implementation can adapt it to find boundaries and occurrences, and a more abstract application of the pattern, known as "Binary Search on the Answer", can solve a broad class of optimization problems. 
+
+### 5.1 Foundational Binary Search: Implementation Nuances
+Even in its basic form, the implementation of binary search contains subtleties that are common sources of bugs, particularly concerning loop conditions and boundary updates. 
+
+#### 5.1.1 Loop Conditions and Boundary Integrity
+The choice of the `whilw` loop condition and the method of updating the `left` and `right` boundaries are interdependent and must be handled with percision. 
+
+- Template 1: `while left <= right`
+
+    This is a common and robust template for finding an exact target. The search space is inclusive of both `left` and `right`. When the loop terminates, `left > right`, meaning the search space is empty. Because `mid` is explicitly checked for equality with the target, the boundaries can be updated to `left = mid+1` and `right = mid-1`, safely excluding `mid` from the next search space.
+    ```python
+    def binary_search_exact(arr, target):
+        left, right = 0, len(arr)-1
+        while left <= right:
+            mid = left + (right-left)//2
+            if arr[mid] == target:
+                return mid
+            elif arr[mid] < target:
+                left = mid + 1
+            else:
+                right = mid - 1
+        return -1
+    ```
+- Template 2: `while left < right`
+
+    This template is often preferred for finding boundaries or insertion points. The loop terminates when `left==right`, at which point they both point to the potential answer. A key difference is in the boundary update. Often, one boundary is updated to `mid` (e.g. `right=mid`) rather than `mid-1`. This is crucial because it keeps `mid` as a potential candidate in the search space, preventing the correct answer from being discarded prematurely. Careful handling of the `mid` calculation is needed to avoid an infinite loop when `left=mid`.
+
+#### 5.1.2 Modified Search for Bounds: First and Last Occurrence
+When an array contains duplicate elements, a standard binary search might find any occurrence of the target, but not necessarily the first or last one. To find these specific boundaries, the search logic must be modified to continue searching even after a match is found. 
+
+- **Logic to Find the First Occurrence**: When `arr[mid] == target`, a potential answer has been found. However, an even earlier occurrence might exist in the left half of the search space. Therefore, we record `mid` as a candidate answer and then aggressively continue the search to the left by setting `high = mid-1`.
+- **Logic to Find the First Occurrence**: Conversely, when `arr[mid]==target`, a later occurrence might exist in the right half. We record `mid` as a candidate and continue the search to the right by setting `low=mid+1`.
+
+These modifications ensure the search space is always narrowed in the direction of the desired boundary. 
+
+### 5.2 The Advanced Paradigm - Binary Search on the Answer
+
+This powerful technique applies the binary search algorithm not to a data array, but to the range of possible answers for a problem. It is used to solve optimization problems that ask for the minimum or maximum value that satisfies a given set of conditions. 
+
+#### 5.2.1 Identifying the Pattern
+Binary Search on the Answer is applicable when the problem exhibits a monotonic property with respect to the answer. This means that if a value `x` is feasible, any value `y<x` must also be feasible. THis property creates a search space that looks lke `(for minimization) or (for maximization)`. The goal of the algorithm is to efficiently find the boundary find the boundary between the `False` and `True` zones. 
+
+#### 5.2.2 The Predicate Function: The Heart of the Pattern
+The core of this pattern is the design of a boolean predicate function, often called `check(value)`. This function takes a potential answer as input and determines if it is feasible according to the problem's constraints. It returns `True` if the `value` is a possible solution and `False` otherwise. The complexity of this `check` function is critical, as it is called O(log(Range)) times. 
+
+For example, in this "Koko Eating Bananas" problem, the goal is to find the minimum eating speed `k` to finish all bananas within `h` hours. The predicate function `check(k)` would calculate the total hours required to eat all bananas at speed `k` and would return `True` if this time is less than or equal to the allowed `h`. 
+
+#### 5.2.3 Template and Application
+The overall algorithm defines a search range `[low, high]` that encompasses all possible answers. A binary search is then performed on this rage. In each iteration, the predicate `check(mid)` is called. Based on its result, the search space is halved. This pattern is exceptionally powerful because it transforms a potentially complex search or optimization problem ("Find the best possible value") into a series of simpler decision problems ("Is this given value feasible?"). Often, the logic for the check function is much more straightforward to implement (e.g., using a greedy approach) than a direct solution to the original optimization problem. The binary search framework then handles the optimization part, efficiently homing in on the boundary between feasible and infeasible solutions. 
+
+```python
+def solve_minimization_problem(params):
+    # Define the search space for the answer. 
+    low, high = min_possible_answer, max_possible_answer
+    ans = high # initialize with a valid but non-optimal answer. 
+    def check(potential_answer):
+        # implement logic to determine if potential_answer is a feasible solution.
+        # This function is problem-specific.
+        # Returns True if feasible, False otherwise.
+        # Example: can_koko_ear_all_bananas(speed=potential_answer)
+        pass
+    while low <= high:
+        mid = low + (high-low)//2
+        if check(mid):
+            # mid is a feasible answer. It might be the optimal one. 
+            # Store it and try to find an even better (smaller) answer. 
+            ans = mid
+            high = mid - 1
+        else:
+            # mid is not a feasible answer. We need a larger value.
+            low = mid + 1
+    return ans
+```
+
+| Goal                     | Loop Condition | `arr[mid] == target` Logic               | Boundary Update (left)                    | Boundary Update (right)                    |
+|--------------------------|----------------|------------------------------------------|-------------------------------------------|--------------------------------------------|
+| Standard Search          | `left <= right`| `return mid`                             | `mid + 1`                                  | `mid - 1`                                   |
+| Find First Occurrence    | `left <= right`| `ans = mid; right = mid - 1`             | `mid + 1`                                  | `mid - 1`                                   |
+| Find Last Occurrence     | `left <= right`| `ans = mid; left = mid + 1`              | `mid + 1`                                  | `mid - 1`                                   |
+| BS on Answer (Minimization) | `left <= right`| N/A (uses `check(mid)`)                   | `mid + 1` (if `check(mid)` is false)       | `mid - 1` (if `check(mid)` is true)         |
+
