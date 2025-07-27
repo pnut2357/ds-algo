@@ -306,22 +306,118 @@ The sliding window is a specialized and highly effective form of the two-pointer
 - Fixed-size Window: In this simpler variant, the window maintains a constant size, `k`. Both the `left` and `right` pointers advance in lockstep, one position at a time, after the initial window of size `k` is formed. This is suitable for problem like "Find the maximum sum of any contiguous subarray of size `k`." The logic involves adding the new element at `right` and removing the old element at `left-1` to maintain the window's sum or state. 
 - Dynamic-size Window: This is a more versatile and common pattern where the window size is not fixed. The `right` pointer concsistently moves forward to expand the window. The `left` pointer only moves forward to shrink the window when a specific condition is violated. The goal is typically to find the longest or shortest window that satisfies some property. 
 
-#### 2.2.2 The canonical Dynamic Window Template
+#### 2.2.2 The canonical Fixed vs. Dynamic Window Template
+```python
+def sliding_window_fixed_size(arr, k):
+    window_sum = sum(arr[:k])
+    max_sum = window_sum
+    for i in range(k, len(arr)):
+        window_sum += arr[i] - arr[i-k]
+        max_sum = max(max_sum, window_sum)
+    return max_sum
+```
 The dynamic sliding window pattern follows a robust and reusable template. It involves an outer loop to expand the window and a nested inner loop to contract it when necessary. A state-keeping data structure, often a hash map, is used to track the properties of the current window. 
 ```python
 def sliding_window(arr, condition_params):
-    left, result, window_state = 0, 0, {}
+    left, result, window_state = 0, 0 or float('inf'), {}
     for right in range(len(arr)):
         # 1. Expand window by including arr[right]
-        # update window_state with arr[right]
+        # update window_state with arr[right] # window_state[s[right]] += 1
         # 2. SHRINK window from the left while it is invalid
         while not is_window_valid(window_state, condition_params):
-            # Update window_state by removing arr[left]
+            # Update window_state by removing arr[left] # window_state[s[left]] -= 1
             left += 1
         # 3. UPDATE result with the current valid window's properties.
         # e.g., result = max(result, right-left+1)
     return result
 ```
+
+NOTE: ❌ Why Sliding Window Fails with Negative Numbers:
+**Sliding window assumes monotonicity (non-decreasing sums)**
+
+For fixed-size or variable-size sliding window to work:
+- As you move right, the sum increases or stays the same 
+- As you move left, the sum decreases or stays the same
+
+✅ This works fine when all numbers are non-negative.
+
+**Application: [325. Maximum Size Subarray Sum Equals k](https://leetcode.com/problems/maximum-size-subarray-sum-equals-k/)**
+```python
+def maxSubArrayLen(nums: List[int], k: int) -> int:
+    current_cum_sum = 0
+    max_length = 0
+    sum_indices = {0: -1} 
+    for j in range(len(nums)): # we need to look for sum(nums[i+1:j]) == k.
+        current_cum_sum += nums[j]
+        diff = current_cum_sum - k
+        if diff in sum_indices: # current_cum_sum[j]-current_cum_sum[i]=k -> sum(nums[i+1:j])
+            # current_cum_sum[j]-k == current_cum_sum[i]; Find current_cum_sum[i] in the sum_indices map
+            max_length = max(max_length, j-sum_indices[diff])
+        if current_cum_sum not in sum_indices: # we ONLY care about the first time a prefix is seen; 
+            # the earlier the current_cum_sum appears, the longer the potential subarray.
+            sum_indices[current_cum_sum] = j
+    return max_length
+```
+
+**Application: [560. Subarray Sum Equals K](https://leetcode.com/problems/subarray-sum-equals-k/description/)**
+```python
+def subarraySum(nums: List[int], k: int) -> int:
+    counter, current_sum = 0, 0
+    prefix_sums_map = {0: 1} # for count
+    for j in range(len(nums)):
+        current_sum += nums[j]
+        diff = current_sum - k
+        if diff in prefix_sums_map:
+            counter += prefix_sums_map.get(diff, 0)
+        prefix_sums_map[current_sum] = 1 + prefix_sums_map.get(current_sum, 0)
+    return counter
+```
+
+**Application: [525. Contiguous Array](https://leetcode.com/problems/contiguous-array/description/)**
+```python
+def findMaxLength(nums: List[int]) -> int:
+    counter, max_length = 0, 0
+    prefix_balance_counter = {0: -1} # for index
+    for j in range(len(nums)): # i+1:j 
+        if nums[j] == 1:
+            counter += 1
+        else:
+            counter -= 1
+        if counter in prefix_balance_counter:
+            max_length = max(max_length, j-prefix_balance_counter[counter])
+        else:
+            prefix_balance_counter[counter] = j
+    return max_length
+```
+
+**Application: [209. Minimum Size Subarray Sum](https://leetcode.com/problems/minimum-size-subarray-sum/)**
+```python
+def minSubArrayLen(target: int, nums: List[int]) -> int:
+    if sum(nums) < target: return 0
+    left, current_sum, min_length = 0, 0, float('inf')
+    for right in range(len(nums)):
+        current_sum += nums[right]
+        while current_sum >= target:
+            min_length = min(min_length, right-left+1)
+            current_sum -= nums[left]
+            left += 1
+    return min_length
+```
+
+Application: [3. Longest Substring Without Repeating Characters](https://leetcode.com/problems/longest-substring-without-repeating-characters/)
+```python
+def lengthOfLongestSubstring(s: str) -> int:
+    left, max_len, hset = 0, 0, set()
+    for right in range(len(s)):
+        while s[right] in hset:
+            hset.remove(s[left])
+            left += 1
+        if s[right] not in hset:
+            hset.add(s[right])
+        max_len = max(max_len, right-left+1)
+    return max_len
+```
+
 
 #### 2.2.3 Nuances in Optimization: Minimums vs. Maximums
 A subtle but powerful detail in applying the dynamic window template is the placement of the result update logic. This placement depends on whether the problem seeks a minimum-length or maximum-length window. 
