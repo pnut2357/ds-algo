@@ -147,12 +147,13 @@ def postorder_traversal(node, result):
 ```
 
 #### 1.2.3 Advanced Application (Cycle Detection in Directed Graphs)
-Detecting cycles in a directed graph presents a more complex challenge than in an undirected one. A simple `visited` set is insufficient because it cannot distinguish between different types of edges encountered during a DFS. The key to directed cycle detection is identifying a back edge: an edge that leads from a node to one ot its ancestors in the DFS traversal tree. The presence of a back edge unequivocally proves the existence of a cycle. 
+Detecting cycles in a directed graph presents a more complex challenge than in an undirected one. A simple `visited` set is insufficient because it cannot distinguish between different types of edges encountered during a DFS. The key to directed cycle detection is identifying a back edge: an edge that leads from a node to one of its ancestors in the DFS traversal tree. The presence of a back edge unequivocally proves the existence of a cycle. 
 
 To identify back edges, a three-state system is required. This system tracks not only where a node has been visited, but also whether it is currently part of the active recursion path. The states are:
 1. `UNVISITED`: The node has not been encountered yet. 
 2. `VISITING`: The node has been visited and is currently in the recursion stack. Its descendants are being explored. 
 3. `VISITED`: The node and all its descendants have been fully explored, and the DFS has backtracked from it.
+
 The algorithm proceeds as follows:
 1. initialize all nodes to `UNVISITED`
 2. Start a DFS from an arbitrary node. When visiting a node, change its state from `UNVISITED` to `VISITING`.
@@ -164,7 +165,7 @@ The algorithm proceeds as follows:
 
 The inStack boolean array used in many code templates is a direct implementation of this `VISITING` state.
 
-This three-state system is crucial for directed graphs. In an undirected graph, this method would fail because the edge `(u, v)` is indistunguisable from '(v, u)'. When exploring from `u` to `v`, `u` would be VISITING, and `v` would immediately see `u` as a `VISITING` neighbor, incorrectly flagging a cycle. FOr undirected graphs, parent, a cycle has been found. This highlights a fundamental poin: the properties of the graph itself dictate the necessary complexity of the algorithm. 
+This three-state system is crucial for directed graphs. In an undirected graph, this method would fail because the edge `(u, v)` is indistunguisable from '(v, u)'. When exploring from `u` to `v`, `u` would be VISITING, and `v` would immediately see `u` as a `VISITING` neighbor, incorrectly flagging a cycle. For undirected graphs, parent, a cycle has been found. This highlights a fundamental point: the properties of the graph itself dictate the necessary complexity of the algorithm. 
 
 | Feature                   | Recursive DFS                                                                 | Iterative DFS                                                                 | Rationale & Key Snippets                                                                                                                                                      |
 |---------------------------|------------------------------------------------------------------------------|-------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -178,7 +179,7 @@ This three-state system is crucial for directed graphs. In an undirected graph, 
 ## Section 2: Pointer-Based Techniques on Linear Data Structures
 A significant class of problems involving linear data structures like arrays, strings, and linked lists can be optimized by employing pointer-based techniques. These patterns typically involve two or more pointers that traverse the data structure in a coordinated fashion, allowing for the examination of elements or sub-structures in a single pass. This approach frequently reduces time complexity from quadratic, O(n^2), which arises from nested loops, to a more efficient linear time, O(n).
 
-### 2.1 The two poionters Paradigm: A Spectrum of Strategies. 
+### 2.1 The two pointers Paradigm: A Spectrum of Strategies. 
 The term "Two Pointers" is not monolithic pattern but rather an umbrella term for a family of distinct strategies. The movement of the pointers and the preconditions of the data (e.g., sored or unsorted) determine the specific sub-pattern. Recognizing the correct sub-pattern is crucial for effective problem solving. The primary variations include pointers starting at opposite ends, pointers moving in the same direction (often called a sliding window), and pointers moving at different speeds. 
 
 #### 2.1.1 Opposite-End Pointers: The "Squeeze"
@@ -205,7 +206,7 @@ def two_sum_approach(arr, target):
 ```
 **Advanced Application: [Trapping Rain Water](https://leetcode.com/problems/trapping-rain-water/)**
 
-A more complex and non-obvious application of this pattern is the "Trapping Rain Water" problem. The goal is to calculate the volume of water that can be trapped between vertical bars of varying heights. AN optimal O(n) time and O(1) space solution uses opposite-end pointers. 
+A more complex and non-obvious application of this pattern is the "Trapping Rain Water" problem. The goal is to calculate the volume of water that can be trapped between vertical bars of varying heights. An optimal O(n) time and O(1) space solution uses opposite-end pointers. 
 
 The core logic relies on maintaining the maximum height seen so far from the left (`left_max`) and from the right (`right_max`). The pointers `left` and `right` move inward. The key realization is that the amount of water trapped above any bar is determined by `min(max_height_to_left, max_height_to_right) - current_height`. The two-pointer approach cleverly calculates this without pre-computing two arrays of max heights. 
 
@@ -368,8 +369,8 @@ def subarraySum(nums: List[int], k: int) -> int:
         current_sum += nums[j]
         diff = current_sum - k
         if diff in prefix_sums_map:
-            counter += prefix_sums_map.get(diff, 0)
-        prefix_sums_map[current_sum] = 1 + prefix_sums_map.get(current_sum, 0)
+            counter += prefix_sums_map.get(diff, 0) # Finds how many times subarray sum == k occurred
+        prefix_sums_map[current_sum] = 1 + prefix_sums_map.get(current_sum, 0) # Track prefix sum frequency
     return counter
 ```
 
@@ -421,7 +422,7 @@ def lengthOfLongestSubstring(s: str) -> int:
 
 #### 2.2.3 Nuances in Optimization: Minimums vs. Maximums
 A subtle but powerful detail in applying the dynamic window template is the placement of the result update logic. This placement depends on whether the problem seeks a minimum-length or maximum-length window. 
-- Finding a Minimum-Length Window: For problems like "Minimum Window Substring", the goal is to find the smallest possible window that is valid. In this case, the inner loop's condition is typically `while window_is_valid`. The logic proceeds as follows: expand the window until it becomes valid. As soon as it is valid, it is a candidate for the minimum, so we update the result immediately. Then, we enter the `while` loop and begine shrinking the window from the left, checking at each step if it remains valid and potentially finding an even smaller valid window. The result must be updated inside this `while` loop, before any shrinking step that might invalidate the window. 
+- Finding a Minimum-Length Window: For problems like "Minimum Window Substring", the goal is to find the smallest possible window that is valid. In this case, the inner loop's condition is typically `while window_is_valid`. The logic proceeds as follows: expand the window until it becomes valid. As soon as it is valid, it is a candidate for the minimum, so we update the result immediately. Then, we enter the `while` loop and begin shrinking the window from the left, checking at each step if it remains valid and potentially finding an even smaller valid window. The result must be updated inside this `while` loop, before any shrinking step that might invalidate the window. 
 - Finding a Maximum-Length Window: For problem like "Longest Substring with K Distinct Characters", the goal is to find the largest possible window that is valid. Here, the inner loop's condition is typically `while window_is_invalid`. The logic is: expand the window with the `right` pointer. If this expansion makes the window invalid, the `while` loop is triggered to shrink the window from the `left` until it becomes valid again. A valid window, which is a candidate for the maximum length, is only guaranteed after the inner shrinking loop has completed (or if it was never entered). Therefore, the result should be updated outside and after the inner `while` loop, at the end of the main `for` loop's iteration. 
 
 This distinction in where the result is updated is not arbitrary; it is a direct consequence of the problem's objective (min vs. max) and the corresponding logic for when a window is considered a viable candidate for the answer. 
@@ -444,11 +445,15 @@ def count_frequencies(data):
 ```
 **The Complement Strategy (Two Sum)**: The "Two Sum" problem is a canonical example of hash map utility. Given an array of integers and a target value, the task is to find two number that sum to the target. A naive approach using nested loops would be O(n^2). A hash map reduces this to O(n).
 
+
 The strategy is to iterate through the array once. For each element `num` at index `i`, we calculate its required `complement` (`target-num`). We then check the hash map to see if this `complement` has been encountered before. 
 
 - If the `complement` exists as a key in the map, we have found our pair. The value associated with the `complement` key is its index, and the current index is `i`. 
 - If the `complement` is not in the map, we add the current number `num` and its index `i` to the map (`lookup[num]=i`) to make it available for future complement checks. 
 
+```python
+dfd
+```
 This one-pass approach effectively trades O(n) space (for the hash map) to reduce the time complexity from O(n^2) to O(n) because the lookup for the complement becomes an average-case O(1) operation instead of an O(n) linear scan. 
 
 #### 3.1.2 Advanced Grouping Logic: The Art of the Canonical Key
@@ -461,6 +466,47 @@ The "Group Anagrams" problem asks to group a list of strings where each group co
 
 The choice between these two strategies represents a classic performance trade-off. For a list of N strings with an average length of K, the sorted-string approach has a time complexity dominated by sorting each string, resulting in a time complexity of O(NKlogK). The character-frequency approach involves a single pass over each string, resulting in a time complexity of O(NK). Asymptotically, the frequency-count method is superior. However, for short strings, the simplicity of the sorting approach and the high optimization of native sorting functions might lead to better practical performance. THis decision between asymptotic superiority and implementation simplicity is a common consideration in software engineering. 
 
+
+
+**Application: [560. Subarray Sum Equals K](https://leetcode.com/problems/subarray-sum-equals-k/description/)**
+```python
+#... Write
+```
+
+**Application: [451. Sort Characters by Frequency](https://leetcode.com/problems/sort-characters-by-frequency/description/)**
+```python
+def frequencySort(s: str) -> str:
+    char_map = {}
+    for i in range(len(s)):
+        # if s[i] in char_map: char_map[s[i]] += 1
+        # else: char_map[s[i]] = 1
+        char_map[s[i]] = char_map.get(s[i], 0) + 1
+    sorted_char = sorted(char_map.items(), key=lambda x: -x[1])
+    return ''.join([char * freq for char, freq in sorted_char])
+```
+
+```python
+class Solution:
+    def minRemoveToMakeValid(self, s: str) -> str:
+        unmatched_indices, invalid_indices = [], set()
+        for i in range(len(s)):
+            if s[i] == '(':
+                unmatched_indices.append(i)
+            elif s[i] == ')':
+                if unmatched_indices:
+                    unmatched_indices.pop()
+                else:
+                    invalid_indices.add(i)
+        if len(unmatched_indices) > 0:
+            for i in unmatched_indices:
+                invalid_indices.add(i)
+        result = ''
+        for i in range(len(s)):
+            if i in invalid_indices:
+                continue
+            result += s[i]
+        return result
+```
 ### 3.2 Hash Sets: Efficient Membership and Uniqueness
 A hash set is a specialized version of a hash map where only the keys are stored and the associated values are irrelevant. Its primary purpose is to provide highly efficient membership testing - answering the question "Is this element present in the collection?" in O(1) average time. 
 
